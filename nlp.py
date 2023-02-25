@@ -1,202 +1,209 @@
 import pandas as pd
 import numpy as np
+from nltk.stem.porter import PorterStemmer
+import re
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix, accuracy_score
+import scikitplot as skplt
 import matplotlib.pyplot as plt
 from PIL import Image
-import re
-from nltk.stem.porter import PorterStemmer
-from nltk.stem import WordNetLemmatizer
-from nltk.corpus import stopwords
-from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-from sklearn.model_selection import train_test_split
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.metrics import accuracy_score, confusion_matrix
-import scikitplot as skplt
+from wordcloud import WordCloud
 
-# text data - NLP problem
-# apply stemming and lemmatization
-# embedding - fidf
-# train test split
-# model building
-# model evaluation
+# text Data - NLP problem
+# Stemming and Lamitization = going goes gone = go
+# count vectorizer / TFIDF
+# train test
+# Model building 
+# Check accuracy
 
 class NLP:
-
     def __init__(self, data):
         self.data = data
 
-# stemming
-    def stemming(self, column_name):
 
-        '''
-        cleaning data using re, porter stemmer and stopwords
-        '''
-        
+    def stemming(self, column_name):
+        '''Cleaning data using re, stemming and stopwords'''
         try:
             corpus = []
             stemming = PorterStemmer()
             for i in range(len(self.data)):
-                tweet = re.sub('[^a-zA-Z]', ' ', self.data[column_name][i])
-                tweet = re.sub('http', '', tweet)
+                tweet = re.sub('[^a-zA-Z]', " ", self.data[column_name][i]) # remove everything aprat from a to z or A to Z
+                tweet = re.sub('http', "", tweet)
+                tweet = re.sub('co', "", tweet)
+                tweet = re.sub('amp', "", tweet)
+                tweet = re.sub('new', "", tweet)
+                tweet = re.sub('one', "", tweet)
                 tweet = tweet.lower()
                 tweet = tweet.split()
-                tweet = [stemming.stem(word) for word in tweet if word not in set(stopwords.words('english'))]
-                tweet = ' '.join(tweet)
+                tweet = [stemming.stem(word) for word in tweet if word not in set(stopwords.words("english"))]
+                tweet = " ".join(tweet)
                 corpus.append(tweet)
-
+            
         except Exception as e:
-            print("Stemming Error:", e)
-
+            print("stemming ERROR : ",e)
+        
         else:
-            print('Data cleaning completed')
+            # print("Cleaning was sucessful")
             return corpus
 
 
- # lemmatization 
-    def lemmatization(self, column_name):
-
-        '''
-        cleaning data using re, lemmatization and stopwords
-        '''
-        
+    def lemmatizing(self, column_name):
+        '''Cleaning data using re, Lemmatization and stopwords'''
         try:
             corpus = []
-            lemmatizer = WordNetLemmatizer()
+            lemmatize = WordNetLemmatizer()
             for i in range(len(self.data)):
-                tweet = re.sub('[^a-zA-Z]', ' ', self.data[column_name][i])
-                tweet = re.sub('http', '', tweet)
+                tweet = re.sub('[^a-zA-Z]', " ", self.data[column_name][i])
+                tweet = re.sub('http', "", tweet)
+                tweet = re.sub('co', "", tweet)
+                tweet = re.sub('amp', "", tweet)
+                tweet = re.sub('new', "", tweet)
+                tweet = re.sub('one', "", tweet)
                 tweet = tweet.lower()
                 tweet = tweet.split()
-                tweet = [lemmatizer.lemmatize(word) for word in tweet if word not in set(stopwords.words('english'))]
-                tweet = ' '.join(tweet)
+                tweet = [lemmatize.lemmatize(word) for word in tweet if word not in set(stopwords.words("english"))]
+                tweet = " ".join(tweet)
                 corpus.append(tweet)
-
+            
         except Exception as e:
-            print("Lemmatization Error:", e)
-
+            print("Lemmatizing ERROR : ",e)
+    
         else:
-            print('Data cleaning completed')
+            # print("Cleaning was sucessful")
             return corpus
 
 
-# count vectorizer
-    def count_vectorizer(self, corpus, max_features=3000, ngram_range=(1,2)):
-
-        '''
-        count vectorizer
-        '''
-
+    def count_vectorizing(self, corpus, max_features = 3000, ngram_range=(1,2)):
+        '''Creating Bag of Words using CountVectorizer'''
         try:
             cv = CountVectorizer(max_features=max_features, ngram_range=ngram_range)
             X = cv.fit_transform(corpus).toarray()
-
+        
         except Exception as e:
-            print('Count Vectorizer error ',e)
-
+            print("count_vectorizing ERROR : ",e)
+        
         else:
-            print('vectorizing using BOW completed')
+            # print("Bag of Words created successfully")
             return X
 
 
-# Tfidf vectorizer
-    def tfidf_vectorizer(self, corpus, max_features=3000, ngram_range=(1,2)):
 
-        '''
-        Tfidf vectorizer
-        '''
-
+    def tf_idf(self, corpus, max_features = 3000, ngram_range=(1,2)):
+        '''Creating Bag of Words using TfidfVectorizer'''
         try:
             tfidf = TfidfVectorizer(max_features=max_features, ngram_range=ngram_range)
             X = tfidf.fit_transform(corpus).toarray()
-
+        
         except Exception as e:
-            print('Tfidf Vectorizer error ',e)
-
+            print("tf_idf ERROR : ",e)
+        
         else:
-            print('vectorizing using tfidf completed')
+            # print("Bag of Words created successfully")
             return X
 
 
-# encoding target feature
     def y_encoding(self, target_label):
-
-        '''
-        encoding target label using pandas get dummies
-        '''
+        """One Hot Encoding if target variable are not in form of 1s and 0s"""
         try:
-            y = pd.get_dummies(self.data[target_label], drop_first=True)
-            
+            y = pd.get_dummies(self.data[target_label], drop_first = True)
+
         except Exception as e:
-            print('Target Encoding Error', e)
+            print("y_encoding ERROR : ", e)
 
         else:
-            print('Target label encoding completed')
+            # print("y encoded sucessfully")
             return y
+    
 
 
-# train test split
-    def split_data(self, X, y, test_size=0.25, random_state=0):
-
-        '''
-        spliting into training and testing data
-        '''
-
+    def split_data(self, X, y, test_size = 0.25, random_state = 0):
+        '''Splitting data into train and test set'''
         try:
-            X_train, X_test, y_train, y_test = train_test_split(X=X, y=y, test_size=test_size, random_state=random_state)
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = test_size, random_state = random_state)
         
         except Exception as e:
-            print('Train Test Split Error', e)
+            print("split_data ERROR : ",e)
 
         else:
-            print('Splitting Data Completed')
+            # print("Successful Splitting")
             return X_train, X_test, y_train, y_test
 
 
-# model training
-    def navie_bayes_model(self, X_train, X_test, y_train, y_test):
-
+    def naive_model(self, X_train, X_test, y_train, y_test):
+        '''Prediction of model using naive_bayes'''
         try:
-            clf = MultinomialNB()
-            clf.fit(X_train, y_train)
-            y_pred = clf.predict(X_test)
-            
-        except Exception as e:
-            print('Model Training and Prediction Error', e)
+            naive = MultinomialNB()
+            naive.fit(X_train , y_train)
 
+            y_pred = naive.predict(X_test)
+        
+        except Exception as e:
+            print("naive_model ERROR : ", e)
+            
         else:
+            # print("Naive Bayes Model built successfully")
             return y_pred
 
-# model evaluation
-    def confusion_matrix_accuracy(self, y_test, y_pred):
 
+    def cm_accuracy(self, y_test, y_pred):
+        '''Performace Metrics'''
         try:
-            skplt.metrics.plot_confusion_matrix(y_test, y_pred, figsize=(8,7))
-            plt.savefig('confusion_matrix.jpg')
-            img_cm = Image.open('confusion_matrix.jpg')
-            accuracy = accuracy_score(y_test, y_pred)
 
-        except Exception as e:
-            print('Model Evaluation Error', e)
+            skplt.metrics.plot_confusion_matrix(y_test, 
+                                                y_pred,
+                                                figsize=(7,7))
+            plt.savefig('CM.jpg')
+            img_cm= Image.open("CM.jpg")
+            accuracy = accuracy_score(y_test, y_pred)
         
+        except Exception as e:
+            print("cm_accuracy ERROR : ", e)
+
         else:
+            # print("cm_accuracy plotted successfully")
             return accuracy, img_cm
 
-# word cloud
-    def word_cloud(self, corpus):
-        
-        try:
-            wordcloud = wordcloud(
-                background_color='white',
-                width=750,
-                height=500
-            ).generate(" ".join(corpus))
 
-            plt.imshow(wordcloud, interpolation='bilinear')
+    def word_cloud(self, corpus):
+        '''Generating Word Cloud'''
+        try:
+            wordcloud = WordCloud(
+                        background_color='white',
+                        width=720,
+                        height=500,
+                        ).generate(" ".join(corpus))
+            plt.imshow(wordcloud, interpolation="bilinear")
             plt.axis('off')
-            plt.savefig('wordcloud.jpg')
-            img_wc = Image.open('wordcloud.jpg')
+            plt.savefig('WC.jpg')
+            img= Image.open("WC.jpg") 
+            
 
         except Exception as e:
-            print('Word Cloud Error', e)
+            print("word_cloud ERROR : ", e)
 
         else:
-            return img_wc  
+            # print("word cloud plotted")
+            return img
+
+
+    def sentimental_analysis_clean(self, text):
+        try:
+            text = re.sub('http', "", text)
+            text = re.sub('co', "", text)
+            text = re.sub('amp', "", text)
+            text = re.sub('new', "", text)
+            text = re.sub('one', "", text)
+            text = re.sub('@[A-Za-z0–9]+', '', text)
+            text = re.sub('#', '', text)
+            text = re.sub('RT[\s]+', '', text)
+            text = re.sub('https?:\/\/\S+', '', text)
+        
+            return text
+
+        except Exception as e:
+            print("sentimental_analysis_clean ERROR : ", e)
